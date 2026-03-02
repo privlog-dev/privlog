@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: logmaster
+Version: 0.1.0
+Summary: LogMaster: privacy-aware logging hygiene checks (Semgrep-powered)
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: typer>=0.12.0
+Requires-Dist: PyYAML>=6.0.0
+
+# Logmaster
+
+A CLI for mastering logs.

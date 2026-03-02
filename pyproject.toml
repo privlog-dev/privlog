@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logmaster"
+version = "0.1.0"
+description = "LogMaster: privacy-aware logging hygiene checks (Semgrep-powered)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "typer>=0.12.0",
+  "PyYAML>=6.0.0",
+]
+
+[project.scripts]
+logmaster = "logmaster.cli:app"
+
+[tool.setuptools]
+packages = ["logmaster"]
+
+[tool.setuptools.package-data]
+logmaster = ["rules/*.yml", "rules/*.yaml"]

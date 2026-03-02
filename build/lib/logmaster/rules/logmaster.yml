@@ -1,0 +1,156 @@
+rules:
+  #
+  # ==========================================================
+  # LogMaster (LM) — Privacy/Log Hygiene "F-like" checks
+  # Focus: High-signal findings with low false positives.
+  # ==========================================================
+  #
+
+  #
+  # LM110x — Direct identifier logging (ERROR)
+  #
+
+  - id: LM1101.no-direct-wix-user-id-in-logs
+    message: "Do not log raw wix_user_id. Use get_salted_identifier(wix_user_id) (or equivalent) before logging."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: logging.$L(..., $WIXID, ...)
+          - pattern: logger.$L(..., $WIXID, ...)
+      - metavariable-regex:
+          metavariable: $WIXID
+          regex: "(?i)^(wix_user_id|wixid|wix_userid)$"
+      - pattern-not: logging.$L(..., get_salted_identifier($WIXID), ...)
+      - pattern-not: logger.$L(..., get_salted_identifier($WIXID), ...)
+
+  - id: LM1102.no-direct-email-in-logs
+    message: "Do not log raw emails. Hash/pseudonymize (e.g., get_salted_identifier(email)) or omit."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: logging.$L(..., $EMAIL, ...)
+          - pattern: logger.$L(..., $EMAIL, ...)
+      - metavariable-regex:
+          metavariable: $EMAIL
+          regex: "(?i)^(email|user_email|customer_email|contact_email|primary_email)$"
+      - pattern-not: logging.$L(..., get_salted_identifier($EMAIL), ...)
+      - pattern-not: logger.$L(..., get_salted_identifier($EMAIL), ...)
+
+  - id: LM1103.no-raw-ip-in-logs
+    message: "Do not log raw IP addresses. Prefer hashed_ip / salted hash."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: logging.$L(..., $IP, ...)
+          - pattern: logger.$L(..., $IP, ...)
+      - metavariable-regex:
+          metavariable: $IP
+          regex: "(?i)^(ip|client_ip|remote_ip|x_forwarded_for|forwarded_for)$"
+      # Allow hashed/salted forms commonly used in your codebase
+      - pattern-not: logging.$L(..., $SAFE, ...)
+      - metavariable-regex:
+          metavariable: $SAFE
+          regex: "(?i)^(hashed_ip|salted_hash|ip_hash|identifier_hash)$"
+
+  #
+  # LM120x — Secrets and auth artifacts (ERROR/WARNING)
+  #
+
+  - id: LM1201.no-auth-headers-in-logs
+    message: "Do not log Authorization/Cookie headers."
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: logging.$L(..., $H['Authorization'], ...)
+          - pattern: logger.$L(..., $H['Authorization'], ...)
+          - pattern: logging.$L(..., $H.get('Authorization'), ...)
+          - pattern: logger.$L(..., $H.get('Authorization'), ...)
+          - pattern: logging.$L(..., $H['Cookie'], ...)
+          - pattern: logger.$L(..., $H['Cookie'], ...)
+          - pattern: logging.$L(..., $H.get('Cookie'), ...)
+          - pattern: logger.$L(..., $H.get('Cookie'), ...)
+          - pattern: logging.$L(..., $H['Set-Cookie'], ...)
+          - pattern: logger.$L(..., $H['Set-Cookie'], ...)
+          - pattern: logging.$L(..., $H.get('Set-Cookie'), ...)
+          - pattern: logger.$L(..., $H.get('Set-Cookie'), ...)
+
+  #
+  # LM130x — Payload dumping (ERROR)
+  #
+
+  - id: LM1301.no-request-body-logging
+    message: "Do not log request body/json/payload content."
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: logging.$L(..., request.json(), ...)
+      - pattern: logging.$L(..., request.body(), ...)
+      - pattern: logger.$L(..., request.json(), ...)
+      - pattern: logger.$L(..., request.body(), ...)
+      - pattern: logging.$L(..., await request.json(), ...)
+      - pattern: logging.$L(..., await request.body(), ...)
+      - pattern: logger.$L(..., await request.json(), ...)
+      - pattern: logger.$L(..., await request.body(), ...)
+
+  - id: LM1302.no-headers-dict-logging
+    message: "Avoid logging full request headers (may contain cookies/tokens). Log minimal safe fields."
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: logging.$L(..., request.headers, ...)
+      - pattern: logger.$L(..., request.headers, ...)
+      - pattern: logging.$L(..., dict(request.headers), ...)
+      - pattern: logger.$L(..., dict(request.headers), ...)
+
+  #
+  # LM140x — Exception logging hygiene (ERROR)
+  #
+  # Goal: Encourage your privacy-safe exception pattern:
+  #   except Exception:
+  #       logging.error("Error ... safe context ...")
+  #
+  # Flag patterns that often leak sensitive objects.
+  #
+
+  - id: LM1401.no-logger-exception-with-object
+    message: "Avoid logger.exception(e) / logging.exception(e). Exception objects may contain sensitive data."
+    severity: ERROR
+    languages: [python]
+    pattern-either:
+      - pattern: logging.exception($E, ...)
+      - pattern: logger.exception($E, ...)
+
+  - id: LM1402.no-error-logging-exception-object
+    message: "Avoid logging.error(e) with raw exception objects; log a generic message + safe identifiers."
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: logging.error($E, ...)
+          - pattern: logger.error($E, ...)
+      - metavariable-regex:
+          metavariable: $E
+          # If it's likely an exception var, flag (common names).
+          regex: "^(e|err|error|exc|exception)$"
+
+  #
+  # LM150x — Vendor response logging (WARNING)
+  #
+  # Your pattern is: status_code + response.text[:200]
+  # That's generally OK if truncated. Flag only if response.text is logged unbounded.
+  #
+
+  - id: LM1501.no-unbounded-response-text
+    message: "Avoid logging full vendor response.text; truncate (e.g., response.text[:200])."
+    severity: WARNING
+    languages: [python]
+    patterns:
+      - pattern-either:
+          - pattern: logging.$L(..., response.text, ...)
+          - pattern: logger.$L(..., response.text, ...)
+      - pattern-not: logging.$L(..., response.text[:$N], ...)
+      - pattern-not: logger.$L(..., response.text[:$N], ...)
