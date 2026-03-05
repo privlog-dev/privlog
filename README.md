@@ -11,7 +11,7 @@ A privacy-aware linter for Python projects, designed to catch accidental leaks o
 - **Built-in Heuristics**: Flags risky patterns like logging entire dictionaries (`extra=...`) or `json.dumps()` output.
 - **`print()` Statement Detection**: Catches sensitive data in leftover `print()` statements, a common source of leaks.
 - **CI/CD Friendly**: Exits with a non-zero code only on `ERROR` findings, allowing warnings to be reviewed without blocking development.
-- **Extensible**: Powered by a combination of custom AST checks and a Semgrep rule engine.
+- **Configurable & Extensible**: Teach `privlog` about your project's custom logging functions via a simple `pyproject.toml` configuration.
 
 ## Installation
 
@@ -42,7 +42,11 @@ Once installed, run the `privlog` command on your project directory.
 By default, `privlog` only reports high-confidence `ERROR`s. If any are found, it will exit with a non-zero code, failing your build.
 
 ```sh
+# Scan a specific directory
 privlog /path/to/your/project
+
+# Or, from inside a project, scan the current directory
+privlog .
 ```
 
 If only warnings are found, the command will pass and provide a helpful message:
@@ -56,9 +60,31 @@ If only warnings are found, the command will pass and provide a helpful message:
 To see both `ERROR`s and `WARNING`s, use the `-w` or `--warnings` flag.
 
 ```sh
+# Scan a specific directory with warnings
 privlog -w /path/to/your/project
+
+# Or, from inside a project, scan the current directory with warnings
+privlog -w .
 ```
+
 This will display all findings, color-coded by severity, but will still only fail the build if `ERROR`s are present.
+
+### Configuring Custom Wrappers
+
+You can teach `privlog` to recognize your own custom logging functions. In your project's `pyproject.toml` file, add a `[tool.privlog.custom_wrappers]` section.
+
+For each custom function, specify its name and which of its keyword arguments should be treated as sensitive, along with the desired severity (`ERROR` or `WARNING`).
+
+**Example `pyproject.toml`:**
+```toml
+[tool.privlog.custom_wrappers]
+# For a function call like: audit(actor_id=user.id, event="login")
+audit = { actor_id = "ERROR" }
+
+# For a function call like: log_event("payment_failed", details=evt)
+log_event = { details = "WARNING" }
+```
+`privlog` will automatically find and use this configuration when you run it.
 
 ---
 

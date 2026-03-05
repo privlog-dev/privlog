@@ -1,36 +1,38 @@
-# Agents Guide – privlog
+# Contributing to privlog
 
-This document is for **coding agents** that work on this repo.
-It explains what the project does and where the important code lives.
+This guide is for developers who want to contribute to the `privlog` project. It explains the project's architecture and where key logic lives.
 
 ---
 
 ## 1. Purpose of this project
 
-- **`privlog`** is a Python CLI tool built with Typer for finding and preventing sensitive data leaks.
-- It uses a hybrid approach, combining pattern-based Semgrep rules with a high-precision, language-aware AST-based scanner.
+- **`privlog`** is a privacy-aware linter for Python that uses a Typer CLI. Its analysis is powered by a hybrid engine combining pattern-based Semgrep rules with a high-precision, language-aware AST-based scanner.
 
 ---
 
 ## 2. Key files and modules
 
 - `pyproject.toml`
-  - **Purpose:** Defines project metadata, dependencies (`typer`, `pyyaml`, `semgrep`), and the `privlog` entry point.
-  - **Responsibilities:** Manages the package and its dependencies.
+  - **Purpose:** Defines project metadata, dependencies, and the `privlog` entry point. It is also the location for user-defined configuration under the `[tool.privlog]` section.
 
 - `README.md`
-  - **Purpose:** Provides a high-level overview for human users.
+  - **Purpose:** Provides a high-level overview and usage instructions for users.
 
 - `privlog/`
   - The main Python package directory.
 
 - `privlog/cli.py`
   - **Purpose:** The main entry point for the CLI application.
-  - **Responsibilities:** Defines commands and arguments using Typer. Implements the `--warnings`/`-w` flag and filters findings based on severity (`ERROR` vs. `WARNING`).
+  - **Responsibilities:** Defines commands and arguments using Typer. Implements the `--warnings`/`-w` flag and filters findings based on severity.
 
 - `privlog/runner.py`
   - **Purpose:** The main analysis engine.
-  - **Responsibilities:** Runs both Semgrep and AST checks, converts all findings into a common `Finding` object, and determines the final exit code based *only* on the presence of `ERROR`-level findings.
+  - **Responsibilities:** 
+    1.  Loads user configuration from `pyproject.toml` via the `_load_config` function.
+    2.  Runs the Semgrep scanner.
+    3.  Runs the AST checker, passing the loaded configuration to it.
+    4.  Merges findings from both sources.
+    5.  Determines the final exit code based *only* on the presence of `ERROR`-level findings.
 
 - `privlog/formatter.py`
   - **Purpose:** Handles the presentation of results.
@@ -41,17 +43,15 @@ It explains what the project does and where the important code lives.
   - **Responsibilities:**
     1.  **Severity System**: Divides sensitive variable names into `HIGH_CONFIDENCE_SENSITIVE_NAMES` (`ERROR`) and `WARNING_SENSITIVE_NAMES` (`WARNING`).
     2.  **Multi-Format Detection**: Understands and inspects arguments within f-strings, `.format()` calls, and `%`-style formatting.
-    3.  **`print()` Check**: Scans `print()` statements for sensitive variables, applying the same severity logic as logging calls.
-    4.  **Heuristic Analysis**: Flags risky but not definitively incorrect patterns as `WARNING`s.
+    3.  **`print()` Check**: Scans `print()` statements for sensitive variables.
+    4.  **Heuristic Analysis**: Flags risky patterns like logging with `extra=...` or `json.dumps()`.
+    5.  **Custom Wrapper Analysis**: Receives the `PrivlogConfig` object and inspects function calls to see if they match a name in the `custom_wrappers` configuration, checking their keyword arguments accordingly.
   - **Finding Codes**:
-    - `LM2101`: A direct sensitive identifier was found in a logging call. Severity can be `ERROR` or `WARNING`.
-    - `LM2201`: A logging call uses the `extra` parameter, which could hide sensitive data. Severity is `WARNING`.
-    - `LM2202`: `json.dumps()` is used in a logging call. Severity is `WARNING`.
-    - `LM2203`: `.to_dict()` is used in a logging call. Severity is `WARNING`.
-    - `LM2301`: A direct sensitive identifier was found in a `print()` call. Severity can be `ERROR` or `WARNING`.
-    - `LM2302`: `json.dumps()` is used in a `print()` call. Severity is `WARNING`.
-    - `LM2303`: `.to_dict()` is used in a `print()` call. Severity is `WARNING`.
+    - `LM2101`: A direct sensitive identifier was found in a logging call.
+    - `LM2201-2203`: A heuristic pattern (like `extra=...` or `json.dumps`) was found in a logging call.
+    - `LM2301-2303`: A sensitive identifier or heuristic pattern was found in a `print()` call.
+    - `LM2401`: A sensitive argument was passed to a custom logging wrapper defined in the user's configuration.
 
 - `privlog/rules/privlog.yml`
-  - **Purpose:** The core Semgrep ruleset, which complements the AST checker by finding broader, less precise patterns.
-  - **Responsibilities:** Defines rules for detecting PII, secrets, and unsafe logging patterns like payload dumping.
+  - **Purpose:** The core Semgrep ruleset, which complements the AST checker.
+  - **Responsibilities:** Defines rules for detecting PII, secrets, and unsafe logging patterns.
