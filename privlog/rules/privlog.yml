@@ -1,7 +1,7 @@
 rules:
   #
   # ==========================================================
-  # LogMaster (LM) — Privacy/Log Hygiene "F-like" checks
+  # privlog (LM) — Privacy/Log Hygiene "F-like" checks
   # Focus: High-signal findings with low false positives.
   # ==========================================================
   #

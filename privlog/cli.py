@@ -1,14 +1,14 @@
 import typer
 from pathlib import Path
-from logmaster.runner import run_analysis
-from logmaster.formatter import print_findings
+from privlog.runner import run_analysis
+from privlog.formatter import print_findings
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
 @app.command()
 def check(
     path: Path = typer.Argument(Path("."), exists=True),
-    config: Path = typer.Option(None, "--config", "-c", help="Optional LogMaster config YAML"),
+    config: Path = typer.Option(None, "--config", "-c", help="Optional privlog config YAML"),
     rules: Path = typer.Option(None, "--rules", "-r", help="Override rules file/folder"),
     json: bool = typer.Option(False, "--json", help="Output JSON (raw Semgrep)"),
     verbose: bool = typer.Option(False, "--verbose", help="Verbose output"),
@@ -17,7 +17,7 @@ def check(
     ),
 ):
     """
-    Run LogMaster checks on a codebase path.
+    Run privlog checks on a codebase path.
     Exits non-zero if ERROR violations are found.
     """
     result = run_analysis(path=path, config=config, rules=rules, verbose=verbose)
@@ -32,7 +32,7 @@ def check(
         # If there are findings, but none to print (because they are warnings),
         # give a specific success message.
         if result.findings and not findings_to_print:
-            typer.secho("✅ Logmaster passed. No errors found.", fg=typer.colors.GREEN)
+            typer.secho("✅ privlog passed. No errors found.", fg=typer.colors.GREEN)
             typer.secho("  (Warnings were found. Run with -w to show them)")
         else:
             print_findings(findings_to_print)

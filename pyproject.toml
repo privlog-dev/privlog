@@ -1,13 +1,17 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "logmaster"
+name = "privlog"
 version = "0.1.0"
-description = "LogMaster: privacy-aware logging hygiene checks (Semgrep-powered)"
+description = "Privacy-aware logging hygiene linter for Python"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
+authors = [
+  {name="Christopher Mariani"}
+]
+license = { text = "Proprietary" }
 dependencies = [
   "typer>=0.12.0",
   "PyYAML>=6.0.0",
@@ -15,10 +19,10 @@ dependencies = [
 ]
 
 [project.scripts]
-logmaster = "logmaster.cli:app"
+privlog = "privlog.cli:app"
 
 [tool.setuptools]
-packages = ["logmaster"]
+packages = ["privlog"]
 
 [tool.setuptools.package-data]
-logmaster = ["rules/*.yml", "rules/*.yaml"]
+privlog = ["rules/*.yml", "rules/*.yaml"]

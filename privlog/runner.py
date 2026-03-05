@@ -27,8 +27,8 @@ class RunResult:
 
 
 def _default_rules_path() -> Path:
-    # Package data path: logmaster/rules/logmaster.yml
-    return Path(files("logmaster").joinpath("rules", "logmaster.yml"))
+    # Package data path: privlog/rules/privlog.yml
+    return Path(files("privlog").joinpath("rules", "privlog.yml"))
 
 
 def _run_semgrep(path: Path, config: Path | None, rules: Path | None, verbose: bool = False) -> RunResult:

@@ -1,5 +1,5 @@
 import typer
-from logmaster.runner import Finding
+from privlog.runner import Finding
 
 def get_severity_color(severity: str) -> str:
     """Returns a color for a given severity."""
@@ -15,7 +15,7 @@ def print_findings(findings: list[Finding]) -> None:
     If no findings are present, prints a success message.
     """
     if not findings:
-        typer.secho("✅ Logmaster passed. No issues found.", fg=typer.colors.GREEN)
+        typer.secho("✅ privlog passed. No issues found.", fg=typer.colors.GREEN)
         return
 
     # Flake8-like: path:line:col [SEVERITY] CODE message
@@ -23,7 +23,7 @@ def print_findings(findings: list[Finding]) -> None:
         severity_color = get_severity_color(f.severity)
         severity_text = f"[{f.severity}]".ljust(10) # Pad to align
         code = f.rule_id
-        msg = f.message.strip() or "LogMaster finding"
+        msg = f.message.strip() or "privlog finding"
 
         typer.secho(f"{f.path}:{f.line}:{f.col} ", nl=False)
         typer.secho(severity_text, fg=severity_color, nl=False)

@@ -21,22 +21,22 @@ It explains what the project does and where the important code lives.
 - `README.md`
   - **Purpose:** Provides a high-level overview for human users.
 
-- `logmaster/`
-  - The main Python package directory. (Note: The project is named `privlog`, but the package directory is still `logmaster`).
+- `privlog/`
+  - The main Python package directory.
 
-- `logmaster/cli.py`
+- `privlog/cli.py`
   - **Purpose:** The main entry point for the CLI application.
   - **Responsibilities:** Defines commands and arguments using Typer. Implements the `--warnings`/`-w` flag and filters findings based on severity (`ERROR` vs. `WARNING`).
 
-- `logmaster/runner.py`
+- `privlog/runner.py`
   - **Purpose:** The main analysis engine.
   - **Responsibilities:** Runs both Semgrep and AST checks, converts all findings into a common `Finding` object, and determines the final exit code based *only* on the presence of `ERROR`-level findings.
 
-- `logmaster/formatter.py`
+- `privlog/formatter.py`
   - **Purpose:** Handles the presentation of results.
   - **Responsibilities:** Prints findings in a `Flake8`-like format, with color-coding for severities.
 
-- `logmaster/ast_checks.py`
+- `privlog/ast_checks.py`
   - **Purpose:** A high-precision Python linter using the `ast` module. It is the core of the tool's intelligence.
   - **Responsibilities:**
     1.  **Severity System**: Divides sensitive variable names into `HIGH_CONFIDENCE_SENSITIVE_NAMES` (`ERROR`) and `WARNING_SENSITIVE_NAMES` (`WARNING`).
@@ -52,6 +52,6 @@ It explains what the project does and where the important code lives.
     - `LM2302`: `json.dumps()` is used in a `print()` call. Severity is `WARNING`.
     - `LM2303`: `.to_dict()` is used in a `print()` call. Severity is `WARNING`.
 
-- `logmaster/rules/logmaster.yml`
+- `privlog/rules/privlog.yml`
   - **Purpose:** The core Semgrep ruleset, which complements the AST checker by finding broader, less precise patterns.
   - **Responsibilities:** Defines rules for detecting PII, secrets, and unsafe logging patterns like payload dumping.
