@@ -4,6 +4,9 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
+# A forward declaration is needed for the type hint in this file
+class PrivlogConfig: ...
+
 LOG_FUNCS = {"debug", "info", "warning", "error", "critical", "exception"}
 
 # High-confidence = ERROR
@@ -118,8 +121,9 @@ def _get_expr_sensitivity(expr: ast.AST) -> str | None:
 
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, config: PrivlogConfig) -> None:
         self.path = path
+        self.config = config
         self.findings: list[AstFinding] = []
 
     def _add_finding(self, node: ast.Call, code: str, message: str, severity: str) -> None:
@@ -141,16 +145,18 @@ class _Visitor(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call) -> None:
         is_log = _is_logging_call(node)
         is_print = _is_print_call(node)
+        
+        # Determine if it's a custom wrapper call
+        func_name = node.func.id if isinstance(node.func, ast.Name) else ""
+        is_custom_wrapper = func_name in self.config.custom_wrappers
 
-        if not is_log and not is_print:
+        if not is_log and not is_print and not is_custom_wrapper:
             self.generic_visit(node)
             return
 
         # Check 1: Direct sensitive identifiers in formatted strings/args
-        if node.args:
+        if node.args and (is_log or is_print):
             args_to_check: list[ast.AST] = []
-            # For print calls, all arguments are checked directly.
-            # For log calls, only format arguments are checked.
             if is_print:
                  args_to_check.extend(node.args)
 
@@ -162,13 +168,11 @@ class _Visitor(ast.NodeVisitor):
             elif (isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Attribute) and first_arg.func.attr == "format"):
                 args_to_check.extend(first_arg.args)
                 args_to_check.extend(kw.value for kw in first_arg.keywords)
-            # Case 1c: %-formatting (for logs only, print doesn't use this pattern)
+            # Case 1c: %-formatting (for logs only)
             elif (is_log and len(node.args) > 1 and isinstance(first_arg, ast.Constant) and isinstance(first_arg.value, str) and "%" in first_arg.value):
                 if len(node.args) == 2 and isinstance(node.args[1], (ast.Tuple, ast.Dict)):
                     if isinstance(node.args[1], ast.Tuple):
                         args_to_check.extend(node.args[1].elts)
-                    elif isinstance(node.args[1], ast.Dict):
-                        args_to_check.extend(node.args[1].values)
                 else:
                     args_to_check.extend(node.args[1:])
 
@@ -182,36 +186,39 @@ class _Visitor(ast.NodeVisitor):
         
         # Check 2: Heuristic checks for dictionary/object logging
         if is_log:
-            # LM2201: Use of 'extra' keyword
             for keyword in node.keywords:
                 if keyword.arg == 'extra':
-                    self._add_finding(node, "LM2201", "Logging with 'extra' parameter can hide sensitive data. Review manually.", "WARNING")
+                    self._add_finding(node, "LM2201", "Logging with 'extra' can hide sensitive data. Review manually.", "WARNING")
                     break
         
-        # LM2202/LM2203/LM2302/LM2303: Serialized objects
+        # Check 3: Custom wrapper checks
+        if is_custom_wrapper:
+            wrapper_rules = self.config.custom_wrappers[func_name]
+            for kw in node.keywords:
+                if kw.arg in wrapper_rules:
+                    severity = wrapper_rules[kw.arg]
+                    self._add_finding(node, "LM2401", f"Sensitive argument '{kw.arg}' passed to custom wrapper '{func_name}'.", severity)
+
+        # Common heuristic checks for all call types
         for arg in node.args:
             if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Attribute):
-                # json.dumps(foo)
                 if isinstance(arg.func.value, ast.Name) and arg.func.value.id == 'json' and arg.func.attr == 'dumps':
                     code = "LM2302" if is_print else "LM2202"
-                    self._add_finding(node, code, "Potentially sensitive object serialized as JSON. Review manually.", "WARNING")
-                    break
-                # foo.to_dict()
+                    self._add_finding(node, code, "Object serialized as JSON may be sensitive. Review manually.", "WARNING")
                 if arg.func.attr == 'to_dict':
                     code = "LM2303" if is_print else "LM2203"
-                    self._add_finding(node, code, "Object converted to dict can hide sensitive data. Review manually.", "WARNING")
-                    break
+                    self._add_finding(node, code, "Object converted to dict may be sensitive. Review manually.", "WARNING")
 
         self.generic_visit(node)
 
 
-def run_ast_checks(root: Path) -> list[AstFinding]:
+def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
     findings: list[AstFinding] = []
     for py in root.rglob("*.py"):
         try:
             text = py.read_text(encoding="utf-8", errors="replace")
             tree = ast.parse(text)
-            v = _Visitor(str(py))
+            v = _Visitor(str(py), config)
             v.visit(tree)
             findings.extend(v.findings)
         except SyntaxError:

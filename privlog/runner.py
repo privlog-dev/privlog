@@ -2,11 +2,22 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from importlib.resources import files
 
+# Use tomllib for Python 3.11+, otherwise tomli
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
 from .ast_checks import run_ast_checks, AstFinding
+
+
+@dataclass
+class PrivlogConfig:
+    custom_wrappers: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -24,6 +35,34 @@ class RunResult:
     findings: list[Finding]
     exit_code: int
     raw_json: str
+
+
+def _load_config(path: Path) -> PrivlogConfig:
+    """Finds and loads privlog config from pyproject.toml."""
+    # Find pyproject.toml in the target path or its parents
+    root = path.is_dir() and path or path.parent
+    pyproject_path = root / "pyproject.toml"
+    
+    # Search upwards for the config file
+    while not pyproject_path.exists():
+        if pyproject_path.parent == pyproject_path.parent.parent: # At fs root
+            break
+        pyproject_path = pyproject_path.parent.parent / "pyproject.toml"
+
+    if not pyproject_path.exists():
+        return PrivlogConfig() # Return default config if not found
+
+    try:
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+        
+        config_data = data.get("tool", {}).get("privlog", {})
+        return PrivlogConfig(
+            custom_wrappers=config_data.get("custom_wrappers", {})
+        )
+    except Exception:
+        # On parsing error, return default config
+        return PrivlogConfig()
 
 
 def _default_rules_path() -> Path:
@@ -76,8 +115,11 @@ def run_analysis(path: Path, config: Path | None, rules: Path | None, verbose: b
     """
     Runs all analysis on the given path, combining Semgrep and AST checks.
     """
+    # Load config from the target path
+    privlog_config = _load_config(path)
+
     semgrep_result = _run_semgrep(path, config, rules, verbose)
-    ast_findings = run_ast_checks(path)
+    ast_findings = run_ast_checks(path, privlog_config)
 
     # Convert AST findings to the common Finding type
     converted_ast_findings = [
