@@ -22,6 +22,13 @@ HIGH_CONFIDENCE_SENSITIVE_NAMES = {
     "secret",
     "api_key",
     "password",
+    # Stripe IDs
+    "stripe_subscription_id",
+    "stripe_customer_id",
+    "stripe_payment_intent_id",
+    "stripe_charge_id",
+    "stripe_invoice_id",
+    "stripe_price_id",
 }
 
 # Medium-confidence = WARNING
