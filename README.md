@@ -13,14 +13,29 @@ A privacy-aware linter for Python projects, designed to catch accidental leaks o
 - **CI/CD Friendly**: Exits with a non-zero code only on `ERROR` findings, allowing warnings to be reviewed without blocking development.
 - **Extensible**: Powered by a combination of custom AST checks and a Semgrep rule engine.
 
-## Usage
+## Installation
 
-First, install the tool in your project's virtual environment:
+It is highly recommended to install `privlog` within a project's virtual environment to avoid dependency conflicts.
+
+**Recommended (Virtual Environment):**
 ```sh
-pip install -e .
+# 1. Create and activate a virtual environment in your project directory
+python -m venv .venv
+source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
+
+# 2. Install privlog
+pip install privlog
 ```
 
-To run the checks, use the `privlog` command.
+**Global Installation:**
+*While not recommended for most workflows, you can also install it globally:*
+```sh
+pip install privlog
+```
+
+## Usage
+
+Once installed, run the `privlog` command on your project directory.
 
 ### Default (Errors Only)
 
@@ -44,3 +59,21 @@ To see both `ERROR`s and `WARNING`s, use the `-w` or `--warnings` flag.
 privlog -w /path/to/your/project
 ```
 This will display all findings, color-coded by severity, but will still only fail the build if `ERROR`s are present.
+
+---
+
+## For Developers
+
+To set up a development environment to contribute to `privlog`:
+```sh
+# 1. Clone the repository and navigate into the directory
+git clone https://github.com/privlog-dev/privlog.git
+cd privlog
+
+# 2. Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# 3. Install the tool in editable mode with development dependencies
+pip install -e .
+```
