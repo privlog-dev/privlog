@@ -12,16 +12,30 @@ def check(
     rules: Path = typer.Option(None, "--rules", "-r", help="Override rules file/folder"),
     json: bool = typer.Option(False, "--json", help="Output JSON (raw Semgrep)"),
     verbose: bool = typer.Option(False, "--verbose", help="Verbose output"),
+    warnings: bool = typer.Option(
+        False, "--warnings", "-w", help="Show WARNING findings in addition to ERRORs."
+    ),
 ):
     """
     Run LogMaster checks on a codebase path.
-    Exits non-zero if violations are found.
+    Exits non-zero if ERROR violations are found.
     """
     result = run_analysis(path=path, config=config, rules=rules, verbose=verbose)
 
     if json:
         typer.echo(result.raw_json)
     else:
-        print_findings(result.findings)
+        findings_to_print = result.findings
+        if not warnings:
+            findings_to_print = [f for f in result.findings if f.severity == "ERROR"]
 
-    raise typer.Exit(code=0 if result.exit_code == 0 else 1)
+        # If there are findings, but none to print (because they are warnings),
+        # give a specific success message.
+        if result.findings and not findings_to_print:
+            typer.secho("✅ Logmaster passed. No errors found.", fg=typer.colors.GREEN)
+            typer.secho("  (Warnings were found. Run with -w to show them)")
+        else:
+            print_findings(findings_to_print)
+
+    # The exit code from run_analysis is now based on ERROR-level findings only
+    raise typer.Exit(code=result.exit_code)

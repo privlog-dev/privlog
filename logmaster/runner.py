@@ -66,7 +66,9 @@ def _run_semgrep(path: Path, config: Path | None, rules: Path | None, verbose: b
                     col=r.get("start", {}).get("col", 0),
                 )
             )
-    exit_code = 0 if len(findings) == 0 else 1
+    
+    has_errors = any(f.severity == "ERROR" for f in findings)
+    exit_code = 1 if has_errors else 0
     return RunResult(findings=findings, exit_code=exit_code, raw_json=raw)
 
 
@@ -81,7 +83,7 @@ def run_analysis(path: Path, config: Path | None, rules: Path | None, verbose: b
     converted_ast_findings = [
         Finding(
             rule_id=f.code,
-            severity="ERROR",  # AST checks are currently all high-severity
+            severity=f.severity,
             message=f.message,
             path=f.path,
             line=f.line,
@@ -94,7 +96,9 @@ def run_analysis(path: Path, config: Path | None, rules: Path | None, verbose: b
     all_findings = semgrep_result.findings + converted_ast_findings
     all_findings.sort(key=lambda f: (f.path, f.line, f.col))
     
-    final_exit_code = 0 if len(all_findings) == 0 else 1
+    # Final exit code depends only on ERROR-level findings
+    has_errors = any(f.severity == "ERROR" for f in all_findings)
+    final_exit_code = 1 if has_errors else 0
     
     # For now, the raw_json from semgrep is preserved. This could be updated
     # to be a combined JSON report if needed in the future.
