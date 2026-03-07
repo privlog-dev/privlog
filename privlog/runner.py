@@ -92,8 +92,8 @@ def _run_semgrep(path: Path, config: Path | None, rules: Path | None, verbose: b
         data = json.loads(raw)
         for r in data.get("results", []):
             raw_rid = r.get("check_id", "UNKNOWN")
-            lm_index = raw_rid.find("LM")
-            rid = raw_rid[lm_index:] if lm_index != -1 else raw_rid
+            pl_index = raw_rid.find("PL")
+            rid = raw_rid[pl_index:] if pl_index != -1 else raw_rid
 
             findings.append(
                 Finding(

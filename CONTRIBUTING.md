@@ -1,4 +1,4 @@
-# Contributing to privlog
+# Contributing to Privlog
 
 This guide is for developers who want to contribute to the `privlog` project. It explains the project's architecture and where key logic lives.
 
@@ -47,10 +47,10 @@ This guide is for developers who want to contribute to the `privlog` project. It
     4.  **Heuristic Analysis**: Flags risky patterns like logging with `extra=...` or `json.dumps()`.
     5.  **Custom Wrapper Analysis**: Receives the `PrivlogConfig` object and inspects function calls to see if they match a name in the `custom_wrappers` configuration, checking their keyword arguments accordingly.
   - **Finding Codes**:
-    - `LM2101`: A direct sensitive identifier was found in a logging call.
-    - `LM2201-2203`: A heuristic pattern (like `extra=...` or `json.dumps`) was found in a logging call.
-    - `LM2301-2303`: A sensitive identifier or heuristic pattern was found in a `print()` call.
-    - `LM2401`: A sensitive argument was passed to a custom logging wrapper defined in the user's configuration.
+    - `PL2101`: A direct sensitive identifier was found in a logging call.
+    - `PL2201-2203`: A heuristic pattern (like `extra=...` or `json.dumps`) was found in a logging call.
+    - `PL2301-2303`: A sensitive identifier or heuristic pattern was found in a `print()` call.
+    - `PL2401`: A sensitive argument was passed to a custom logging wrapper defined in the user's configuration.
 
 - `privlog/rules/privlog.yml`
   - **Purpose:** The core Semgrep ruleset, which complements the AST checker.

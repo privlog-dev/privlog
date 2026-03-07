@@ -179,7 +179,7 @@ class _Visitor(ast.NodeVisitor):
             for arg in args_to_check:
                 severity = _get_expr_sensitivity(arg)
                 if severity:
-                    code = "LM2301" if is_print else "LM2101"
+                    code = "PL2301" if is_print else "PL2101"
                     call_type = "print()" if is_print else "log"
                     self._add_finding(node, code, f"Sensitive identifier passed to {call_type}. Hash/pseudonymize or omit.", severity)
                     break
@@ -188,7 +188,7 @@ class _Visitor(ast.NodeVisitor):
         if is_log:
             for keyword in node.keywords:
                 if keyword.arg == 'extra':
-                    self._add_finding(node, "LM2201", "Logging with 'extra' can hide sensitive data. Review manually.", "WARNING")
+                    self._add_finding(node, "PL2201", "Logging with 'extra' can hide sensitive data. Review manually.", "WARNING")
                     break
         
         # Check 3: Custom wrapper checks
@@ -197,16 +197,16 @@ class _Visitor(ast.NodeVisitor):
             for kw in node.keywords:
                 if kw.arg in wrapper_rules:
                     severity = wrapper_rules[kw.arg]
-                    self._add_finding(node, "LM2401", f"Sensitive argument '{kw.arg}' passed to custom wrapper '{func_name}'.", severity)
+                    self._add_finding(node, "PL2401", f"Sensitive argument '{kw.arg}' passed to custom wrapper '{func_name}'.", severity)
 
         # Common heuristic checks for all call types
         for arg in node.args:
             if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Attribute):
                 if isinstance(arg.func.value, ast.Name) and arg.func.value.id == 'json' and arg.func.attr == 'dumps':
-                    code = "LM2302" if is_print else "LM2202"
+                    code = "PL2302" if is_print else "PL2202"
                     self._add_finding(node, code, "Object serialized as JSON may be sensitive. Review manually.", "WARNING")
                 if arg.func.attr == 'to_dict':
-                    code = "LM2303" if is_print else "LM2203"
+                    code = "PL2303" if is_print else "PL2203"
                     self._add_finding(node, code, "Object converted to dict may be sensitive. Review manually.", "WARNING")
 
         self.generic_visit(node)

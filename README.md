@@ -1,4 +1,8 @@
-# privlog
+# Privlog
+
+[![PyPI](https://img.shields.io/pypi/v/privlog)](https://pypi.org/project/privlog/)
+[![Python](https://img.shields.io/pypi/pyversions/privlog)](https://pypi.org/project/privlog)
+[![License](https://img.shields.io/github/license/privlog-dev/privlog)](https://github.com/privlog-dev/privlog/blob/main/LICENSE)
 
 A privacy-aware linter for Python projects, designed to catch accidental leaks of sensitive data in logs and `print` statements before they reach production.
 
