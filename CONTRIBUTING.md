@@ -79,7 +79,7 @@ privlog .
 
 - `privlog/rules/privlog.yml`
   - **Purpose:** The core Semgrep ruleset, which complements the AST checker.
-  - **Responsibilities:** Defines rules for detecting PII, secrets, and unsafe logging patterns.
+  - **Responsibilities:** Defines rules for detecting sensitive identifiers, secrets, and unsafe logging patterns.
 
 ---
 
