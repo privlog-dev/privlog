@@ -188,7 +188,7 @@ class _Visitor(ast.NodeVisitor):
         if is_log:
             for keyword in node.keywords:
                 if keyword.arg == 'extra':
-                    self._add_finding(node, "PL2201", "Logging with 'extra' can hide sensitive data. Review manually.", "WARNING")
+                    self._add_finding(node, "PL2201", "Logging with 'extra' parameter may leak sensitive data. Please review manually.", "WARNING")
                     break
         
         # Check 3: Custom wrapper checks

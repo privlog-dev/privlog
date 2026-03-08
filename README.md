@@ -8,6 +8,30 @@ A privacy-aware linter for Python projects, designed to catch accidental leaks o
 
 `privlog` is built to be a developer's first line of defense, integrating directly into your local workflow and CI/CD pipelines to enforce logging hygiene.
 
+## Why Privlog?
+
+Accidentally logging sensitive data is a common source of security and privacy issues in production systems. Tokens, user identifiers, request bodies, and other sensitive values often end up in logs during development and debugging.
+
+Privlog helps detect these risks early by scanning Python code for logging patterns that may expose sensitive data.
+
+## Quick Example
+
+Given a file `app/auth.py`:
+```python
+import logging
+
+def reauthenticate_user(user_email):
+    # ...
+    logging.info(f"Initiating re-authentication for {user_email}")
+    # ...
+```
+
+Running `privlog .` will produce the following error:
+
+```
+app/auth.py:5:5 [ERROR]    PL2101 Sensitive identifier passed to log. Hash/pseudonymize or omit.
+```
+
 ## Features
 
 - **High-Precision AST Analysis**: Goes beyond simple regex to parse Python code, understanding variable names inside f-strings, `.format()` calls, and more.
@@ -89,6 +113,13 @@ audit = { actor_id = "ERROR" }
 log_event = { details = "WARNING" }
 ```
 `privlog` will automatically find and use this configuration when you run it.
+
+---
+
+## Status
+
+Privlog is currently in early development (v0.2.0).
+Feedback and contributions are welcome.
 
 ---
 
