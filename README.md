@@ -120,7 +120,7 @@ log_event = { details = "WARNING" }
 
 ## Status
 
-Privlog is currently in early development (v0.2.0).
+Privlog is currently in early development (v0.2.1).
 Feedback and contributions are welcome.
 
 ---
