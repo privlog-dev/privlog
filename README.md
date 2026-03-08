@@ -63,7 +63,7 @@ pip install privlog
 
 ## Usage
 
-Once installed, run the `privlog` command on your project directory.
+Once installed, you can run `privlog` against a specific path, or run it by itself to scan the current directory.
 
 ### Default (Errors Only)
 

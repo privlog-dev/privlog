@@ -1,16 +1,41 @@
 # Contributing to Privlog
 
-This guide is for developers who want to contribute to the `privlog` project. It explains the project's architecture and where key logic lives.
+Thank you for your interest in contributing to Privlog.
+
+This guide explains the project's architecture, development workflow, and where key logic lives.
 
 ---
 
-## 1. Purpose of this project
+## 1. Project Purpose
 
-- **`privlog`** is a privacy-aware linter for Python that uses a Typer CLI. Its analysis is powered by a hybrid engine combining pattern-based Semgrep rules with a high-precision, language-aware AST-based scanner.
+Privlog is a privacy-aware linter for Python. The command-line interface is implemented using Typer, while the analysis engine combines Semgrep rules with a Python AST-based scanner.
 
 ---
 
-## 2. Key files and modules
+## 2. Development Setup
+
+To work on Privlog locally:
+
+```bash
+git clone https://github.com/privlog-dev/privlog.git
+cd privlog
+
+python -m venv .venv
+source .venv/bin/activate
+
+pip install -e .
+```
+
+This installs Privlog in editable mode so code changes immediately affect the CLI.
+
+You can verify the installation by running a scan on the project itself:
+```bash
+privlog .
+```
+
+---
+
+## 3. Key files and modules
 
 - `pyproject.toml`
   - **Purpose:** Defines project metadata, dependencies, and the `privlog` entry point. It is also the location for user-defined configuration under the `[tool.privlog]` section.
@@ -22,7 +47,7 @@ This guide is for developers who want to contribute to the `privlog` project. It
   - The main Python package directory.
 
 - `privlog/cli.py`
-  - **Purpose:** The main entry point for the CLI application.
+  - **Purpose:** The main Typer entry point for the CLI application.
   - **Responsibilities:** Defines commands and arguments using Typer. Implements the `--warnings`/`-w` flag and filters findings based on severity.
 
 - `privlog/runner.py`
@@ -55,3 +80,31 @@ This guide is for developers who want to contribute to the `privlog` project. It
 - `privlog/rules/privlog.yml`
   - **Purpose:** The core Semgrep ruleset, which complements the AST checker.
   - **Responsibilities:** Defines rules for detecting PII, secrets, and unsafe logging patterns.
+
+---
+
+## 4. Contribution Guidelines
+
+When contributing code:
+
+- Keep the CLI interface stable
+- Maintain clear error messages and finding codes
+- Prefer AST-based detection when accuracy matters
+- Keep rules deterministic and easy to understand
+
+Before submitting a pull request:
+
+- Ensure the CLI runs correctly
+- Verify that findings behave as expected
+- Update documentation if behavior changes
+
+### Submitting Pull Requests
+
+1.  Fork the repository.
+2.  Create a feature branch (`git checkout -b feature/AmazingFeature`).
+3.  Make your changes.
+4.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+5.  Push to the branch (`git push origin feature/AmazingFeature`).
+6.  Open a new Pull Request.
+
+Clear explanations and examples are always appreciated.
