@@ -65,6 +65,8 @@ pip install privlog
 
 Once installed, you can run `privlog` against a specific path, or run it by itself to scan the current directory.
 
+> **Note:** `privlog` automatically ignores common dependency and build directories (like `.venv`, `site-packages`, `build`, etc.) to reduce noise.
+
 ### Default (Errors Only)
 
 By default, `privlog` only reports high-confidence `ERROR`s. If any are found, it will exit with a non-zero code, failing your build.
@@ -118,7 +120,7 @@ log_event = { details = "WARNING" }
 
 ## Status
 
-Privlog is currently in early development (v0.2.0).
+Privlog is currently in early development (v0.2.1).
 Feedback and contributions are welcome.
 
 ---

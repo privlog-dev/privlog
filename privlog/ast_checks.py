@@ -212,9 +212,27 @@ class _Visitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
+DEFAULT_IGNORE_DIRS = {
+    ".venv",
+    "venv",
+    "env",
+    "site-packages",
+    "__pycache__",
+    "dist",
+    "build",
+    ".git",
+}
+
 def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
     findings: list[AstFinding] = []
-    for py in root.rglob("*.py"):
+    
+    all_python_files = root.rglob("*.py")
+
+    for py in all_python_files:
+        # Check if any parent directory component is in the ignore list
+        if any(part in DEFAULT_IGNORE_DIRS for part in py.parts):
+            continue
+
         try:
             text = py.read_text(encoding="utf-8", errors="replace")
             tree = ast.parse(text)
