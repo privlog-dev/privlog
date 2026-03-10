@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privlog</title>
+  <meta name="description" content="A Python CLI that detects sensitive data in logs before it reaches production.">
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --panel: #111111;
+      --text: #f3f0e8;
+      --muted: #b8b0a0;
+      --accent: #e6c44f;
+      --border: #262626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 20px 72px;
+    }
+    .brand {
+      display: inline-block;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      margin-bottom: 20px;
+    }
+    a.brand-link { text-decoration: none; }
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      line-height: 1.05;
+      margin: 0 0 16px;
+    }
+    p.lead {
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 720px;
+      margin: 0 0 28px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 0 0 36px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: var(--panel);
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 18px 0;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+    }
+    pre {
+      position: relative;
+      margin: 0;
+      overflow-x: auto;
+      background: #0e0e0e;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      color: #f5e7a8;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #222;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 4px 8px;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+    pre:hover .copy-btn {
+      opacity: 1;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    ul {
+      margin: 8px 0 0 18px;
+      padding: 0;
+    }
+    footer {
+      margin-top: 40px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <a class="brand-link" href="https://github.com/privlog-dev/privlog">
+      <div class="brand">PL</div>
+    </a>
+    <h1>Privlog</h1>
+    <p class="lead">
+      A Python CLI that detects sensitive data in logs before it reaches production.
+    </p>
+
+    <div class="actions">
+      <a class="btn primary" href="https://pypi.org/project/privlog/">Install from PyPI</a>
+      <a class="btn" href="https://github.com/privlog-dev/privlog">View on GitHub</a>
+    </div>
+
+    <section class="card">
+      <h2>Install</h2>
+      <pre><code id="install-command">pip install privlog</code><button class="copy-btn" onclick="copyCommand('install-command', event)">Copy</button></pre>
+    </section>
+
+    <section class="card">
+      <h2>Run</h2>
+      <pre><code id="run-command">privlog .</code><button class="copy-btn" onclick="copyCommand('run-command', event)">Copy</button></pre>
+    </section>
+
+    <section class="card">
+      <h2>What it checks</h2>
+      <ul>
+        <li>Sensitive identifiers passed into logging calls</li>
+        <li>Risky <code>print()</code> statements</li>
+        <li>Custom logging wrappers configured through <code>pyproject.toml</code></li>
+        <li>Common logging patterns that may expose sensitive data</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Example</h2>
+      <pre><code>app.py:12:9 [ERROR] PL2101 Sensitive identifier passed to log. Hash/pseudonymize or omit.</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>CI/CD Integration</h2>
+      <p>
+        Privlog exits with a non-zero status code when high-confidence
+        <code>ERROR</code> findings are detected, allowing CI/CD pipelines
+        to fail fast when sensitive logging patterns appear.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Why it exists</h2>
+      <p>
+        Logs are useful for operators and developers, but sensitive data often gets logged during debugging and accidentally survives into production workflows.
+        Privlog helps catch those patterns early.
+      </p>
+    </section>
+
+    <footer>
+      Privlog is open source under the MIT License.  
+      GitHub: <a href="https://github.com/privlog-dev/privlog">privlog-dev/privlog</a>
+    </footer>
+  </main>
+
+  <script>
+    function copyCommand(elementId, event) {
+      const button = event.target;
+      const text = document.getElementById(elementId).innerText;
+
+      navigator.clipboard.writeText(text).then(() => {
+        button.innerText = "Copied!";
+        setTimeout(() => {
+          button.innerText = "Copy";
+        }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>
