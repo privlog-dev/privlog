@@ -37,6 +37,7 @@
       letter-spacing: 0.04em;
       margin-bottom: 20px;
     }
+    a.brand-link { text-decoration: none; }
     h1 {
       font-size: clamp(2.2rem, 6vw, 4rem);
       line-height: 1.05;
@@ -104,7 +105,9 @@
 </head>
 <body>
   <main class="wrap">
-    <div class="brand">PL</div>
+    <a class="brand-link" href="https://github.com/privlog-dev/privlog">
+      <div class="brand">PL</div>
+    </a>
     <h1>Privlog</h1>
     <p class="lead">
       A Python CLI that detects sensitive data in logs before it reaches production.
@@ -138,6 +141,15 @@
     <section class="card">
       <h2>Example</h2>
       <pre><code>app.py:12:9 [ERROR] PL2101 Sensitive identifier passed to log. Hash/pseudonymize or omit.</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>CI/CD Integration</h2>
+      <p>
+        Privlog exits with a non-zero status code when high-confidence
+        <code>ERROR</code> findings are detected, allowing CI/CD pipelines
+        to fail fast when sensitive logging patterns appear.
+      </p>
     </section>
 
     <section class="card">
