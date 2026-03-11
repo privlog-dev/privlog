@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from importlib.resources import files
+import typer
 
 # Use tomllib for Python 3.11+, otherwise tomli
 try:
@@ -84,7 +85,8 @@ def _run_semgrep(path: Path, config: Path | None, rules: Path | None, verbose: b
     if verbose:
         cmd.insert(1, "--verbose")
 
-    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+    stderr_setting = None if verbose else subprocess.PIPE
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=stderr_setting, text=True, encoding="utf-8")
     raw = proc.stdout.strip() if proc.stdout else ""
 
     findings: list[Finding] = []
@@ -118,7 +120,12 @@ def run_analysis(path: Path, config: Path | None, rules: Path | None, verbose: b
     # Load config from the target path
     privlog_config = _load_config(path)
 
+    typer.secho("Running Semgrep scan...", fg=typer.colors.BLUE)
+
     semgrep_result = _run_semgrep(path, config, rules, verbose)
+
+    typer.secho("Semgrep scan complete.", fg=typer.colors.BLUE)
+
     ast_findings = run_ast_checks(path, privlog_config)
 
     # Convert AST findings to the common Finding type

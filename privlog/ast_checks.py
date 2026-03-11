@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 from pathlib import Path
+import typer
 
 # A forward declaration is needed for the type hint in this file
 class PrivlogConfig: ...
@@ -223,15 +224,31 @@ DEFAULT_IGNORE_DIRS = {
     ".git",
 }
 
-def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
-    findings: list[AstFinding] = []
-    
-    all_python_files = root.rglob("*.py")
-
-    for py in all_python_files:
-        # Check if any parent directory component is in the ignore list
+def _collect_python_files(root: Path) -> list[Path]:
+    """Recursively finds all Python files in a directory, respecting ignores."""
+    all_files = []
+    for py in root.rglob("*.py"):
         if any(part in DEFAULT_IGNORE_DIRS for part in py.parts):
             continue
+        all_files.append(py)
+    return all_files
+
+
+def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
+    """
+    Scans for sensitive data in Python files using AST checks.
+    """
+    findings: list[AstFinding] = []
+    
+    files_to_scan = _collect_python_files(root)
+    total_files = len(files_to_scan)
+
+    typer.secho(f"Running AST checks on {total_files} Python files...", fg=typer.colors.BLUE)
+
+    for i, py in enumerate(files_to_scan):
+        # \r to return to start of line, \x1b[K to clear line
+        progress_msg = f"Scanning [{i + 1}/{total_files}] {str(py)}"
+        typer.secho(f"\r\x1b[K{progress_msg}", fg=typer.colors.WHITE, nl=False)
 
         try:
             text = py.read_text(encoding="utf-8", errors="replace")
@@ -240,6 +257,12 @@ def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
             v.visit(tree)
             findings.extend(v.findings)
         except SyntaxError:
-            # Ignore files that aren't parseable in current context
             continue
+        except Exception:
+            # Fallback for other file-read errors
+            continue
+    
+    # Clear the line and print a final message
+    typer.secho("\r\x1b[KAST checks complete.", fg=typer.colors.BLUE)
+
     return findings

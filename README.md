@@ -99,6 +99,11 @@ privlog -w .
 
 This will display all findings, color-coded by severity, but will still only fail the build if `ERROR`s are present.
 
+### Other Flags
+
+- `--verbose` / `-v`: Enables verbose output from the underlying `semgrep` scanner. This is useful for debugging rules and understanding which files `semgrep` is scanning or skipping. By default, `privlog` always shows a high-level progress indicator; this flag provides much more detail about the `semgrep` scanning phase.
+- `--version`: Display the installed version of `privlog`.
+
 ### Configuring Custom Wrappers
 
 You can teach `privlog` to recognize your own custom logging functions. In your project's `pyproject.toml` file, add a `[tool.privlog.custom_wrappers]` section.
@@ -120,7 +125,7 @@ log_event = { details = "WARNING" }
 
 ## Status
 
-Privlog is currently in early development (v0.2.1).
+Privlog is currently in early development (v0.2.2).
 Feedback and contributions are welcome.
 
 ---
