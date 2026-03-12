@@ -5,7 +5,7 @@ import importlib.metadata
 from privlog.runner import run_analysis
 from privlog.formatter import print_findings
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 def version_callback(value: bool):
     if value:
