@@ -93,10 +93,10 @@ def _is_safe_wrapper(expr: ast.AST) -> bool:
     )
 
 
-def _get_expr_sensitivity(expr: ast.AST) -> str | None:
+def _get_expr_sensitivity(expr: ast.AST) -> tuple[str, str] | None:
     """
     Checks an expression for sensitive names.
-    Returns severity ('ERROR', 'WARNING') or None if not sensitive.
+    Returns a tuple of (severity, sensitive_name) or None if not sensitive.
     """
     # Allow slicing, which is a form of truncation
     if isinstance(expr, ast.Subscript):
@@ -106,17 +106,19 @@ def _get_expr_sensitivity(expr: ast.AST) -> str | None:
     if _is_safe_wrapper(expr):
         return None
 
-    # Allow known-safe name variables
     names = _names_in_expr(expr)
+    # Allow known-safe name variables
     if any(n in SAFE_NAMES for n in names):
         return None
 
     # Flag if any sensitive name appears
-    if any(n.lower() in HIGH_CONFIDENCE_SENSITIVE_NAMES for n in names):
-        return "ERROR"
-    
-    if any(n.lower() in WARNING_SENSITIVE_NAMES for n in names):
-        return "WARNING"
+    for name in names:
+        if name.lower() in HIGH_CONFIDENCE_SENSITIVE_NAMES:
+            return "ERROR", name
+            
+    for name in names:
+        if name.lower() in WARNING_SENSITIVE_NAMES:
+            return "WARNING", name
 
     return None
 
@@ -178,11 +180,13 @@ class _Visitor(ast.NodeVisitor):
                     args_to_check.extend(node.args[1:])
 
             for arg in args_to_check:
-                severity = _get_expr_sensitivity(arg)
-                if severity:
+                sensitivity = _get_expr_sensitivity(arg)
+                if sensitivity:
+                    severity, name = sensitivity
                     code = "PL2301" if is_print else "PL2101"
                     call_type = "print()" if is_print else "log"
-                    self._add_finding(node, code, f"Sensitive identifier passed to {call_type}. Hash/pseudonymize or omit.", severity)
+                    message = f'Sensitive identifier "{name}" passed to {call_type}. Hash, pseudonymize, or omit before logging.'
+                    self._add_finding(node, code, message, severity)
                     break
         
         # Check 2: Heuristic checks for dictionary/object logging
