@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 from pathlib import Path
+import typer
 
 # A forward declaration is needed for the type hint in this file
 class PrivlogConfig: ...
@@ -92,10 +93,10 @@ def _is_safe_wrapper(expr: ast.AST) -> bool:
     )
 
 
-def _get_expr_sensitivity(expr: ast.AST) -> str | None:
+def _get_expr_sensitivity(expr: ast.AST) -> tuple[str, str] | None:
     """
     Checks an expression for sensitive names.
-    Returns severity ('ERROR', 'WARNING') or None if not sensitive.
+    Returns a tuple of (severity, sensitive_name) or None if not sensitive.
     """
     # Allow slicing, which is a form of truncation
     if isinstance(expr, ast.Subscript):
@@ -105,17 +106,19 @@ def _get_expr_sensitivity(expr: ast.AST) -> str | None:
     if _is_safe_wrapper(expr):
         return None
 
-    # Allow known-safe name variables
     names = _names_in_expr(expr)
+    # Allow known-safe name variables
     if any(n in SAFE_NAMES for n in names):
         return None
 
     # Flag if any sensitive name appears
-    if any(n.lower() in HIGH_CONFIDENCE_SENSITIVE_NAMES for n in names):
-        return "ERROR"
-    
-    if any(n.lower() in WARNING_SENSITIVE_NAMES for n in names):
-        return "WARNING"
+    for name in names:
+        if name.lower() in HIGH_CONFIDENCE_SENSITIVE_NAMES:
+            return "ERROR", name
+            
+    for name in names:
+        if name.lower() in WARNING_SENSITIVE_NAMES:
+            return "WARNING", name
 
     return None
 
@@ -177,11 +180,13 @@ class _Visitor(ast.NodeVisitor):
                     args_to_check.extend(node.args[1:])
 
             for arg in args_to_check:
-                severity = _get_expr_sensitivity(arg)
-                if severity:
+                sensitivity = _get_expr_sensitivity(arg)
+                if sensitivity:
+                    severity, name = sensitivity
                     code = "PL2301" if is_print else "PL2101"
                     call_type = "print()" if is_print else "log"
-                    self._add_finding(node, code, f"Sensitive identifier passed to {call_type}. Hash/pseudonymize or omit.", severity)
+                    message = f'Sensitive identifier "{name}" passed to {call_type}. Hash, pseudonymize, or omit before logging.'
+                    self._add_finding(node, code, message, severity)
                     break
         
         # Check 2: Heuristic checks for dictionary/object logging
@@ -223,15 +228,31 @@ DEFAULT_IGNORE_DIRS = {
     ".git",
 }
 
-def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
-    findings: list[AstFinding] = []
-    
-    all_python_files = root.rglob("*.py")
-
-    for py in all_python_files:
-        # Check if any parent directory component is in the ignore list
+def _collect_python_files(root: Path) -> list[Path]:
+    """Recursively finds all Python files in a directory, respecting ignores."""
+    all_files = []
+    for py in root.rglob("*.py"):
         if any(part in DEFAULT_IGNORE_DIRS for part in py.parts):
             continue
+        all_files.append(py)
+    return all_files
+
+
+def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
+    """
+    Scans for sensitive data in Python files using AST checks.
+    """
+    findings: list[AstFinding] = []
+    
+    files_to_scan = _collect_python_files(root)
+    total_files = len(files_to_scan)
+
+    typer.secho(f"Running AST checks on {total_files} Python files...", fg=typer.colors.BLUE)
+
+    for i, py in enumerate(files_to_scan):
+        # \r to return to start of line, \x1b[K to clear line
+        progress_msg = f"Scanning [{i + 1}/{total_files}] {str(py)}"
+        typer.secho(f"\r\x1b[K{progress_msg}", fg=typer.colors.WHITE, nl=False)
 
         try:
             text = py.read_text(encoding="utf-8", errors="replace")
@@ -240,6 +261,12 @@ def run_ast_checks(root: Path, config: PrivlogConfig) -> list[AstFinding]:
             v.visit(tree)
             findings.extend(v.findings)
         except SyntaxError:
-            # Ignore files that aren't parseable in current context
             continue
+        except Exception:
+            # Fallback for other file-read errors
+            continue
+    
+    # Clear the line and print a final message
+    typer.secho("\r\x1b[KAST checks complete.", fg=typer.colors.BLUE)
+
     return findings
