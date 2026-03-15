@@ -29,7 +29,7 @@ def reauthenticate_user(user_email):
 Running `privlog .` will produce the following error:
 
 ```
-app/auth.py:5:5 [ERROR]    PL2101 Sensitive identifier passed to log. Hash/pseudonymize or omit.
+app/auth.py:5:5 [ERROR]    PL2101 Sensitive identifier "user_email" passed to log. Hash, pseudonymize, or omit before logging.
 ```
 
 ## Features
