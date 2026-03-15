@@ -11,7 +11,8 @@ requires-python = ">=3.9"
 authors = [
   {name="Christopher Mariani"}
 ]
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.9",
@@ -29,8 +30,9 @@ dependencies = [
 [project.scripts]
 privlog = "privlog.cli:app"
 
-[tool.setuptools]
-packages = ["privlog"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["privlog*"]
 
 [tool.setuptools.package-data]
 privlog = ["rules/*.yml", "rules/*.yaml"]
